@@ -3,7 +3,7 @@
 AS = nasm
 CC = gcc
 ASFLAGS = -f elf64
-CFLAGS = -ffreestanding -fno-stack-protector -fno-builtin -Wall -Wextra -O2
+CFLAGS = -ffreestanding -fno-stack-protector -fno-builtin -fno-pic -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wall -Wextra -O2
 LDFLAGS = -ffreestanding -nostdlib -fno-PIE -no-pie -lgcc
 
 BOOT_SRC = boot/bootloader.asm

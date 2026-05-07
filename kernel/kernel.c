@@ -14,7 +14,7 @@ void kernel_main(void)
     vga_puts("Kernel halting...\n");
     
     /* Halt forever */
-    while(1) {
-        asm("hlt");
+    while (1) {
+    asm volatile("cli; hlt");
     }
 }

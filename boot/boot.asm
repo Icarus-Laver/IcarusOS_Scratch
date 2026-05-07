@@ -33,49 +33,55 @@ bits 32
 global _start
 
 _start:
+    cli
+    cld
+
     ; Set up stack for 32-bit mode
     mov esp, stack_top
-    
-    ; Save multiboot info on stack
-    ; eax = magic number (will be passed in rdi in 64-bit)
-    ; ebx = multiboot info pointer (will be passed in rsi in 64-bit)
-    
+
     ; Load 64-bit GDT
     lgdt [gdt_descriptor]
-    
-    ; Enable PAE (Physical Address Extension)
+
+    ; Enable PAE
     mov eax, cr4
     or eax, 0x20
     mov cr4, eax
-    
-    ; Set up page table (identity mapping first 2MB)
+
+    ; Clear page-table area: 0x1000 - 0x4FFF
     mov edi, 0x1000
     xor eax, eax
     mov ecx, 4096
     rep stosd
-    
+
+    ; PML4[0] -> PDPT at 0x2000
     mov dword [0x1000], 0x2003
+    mov dword [0x1004], 0x0000
+
+    ; PDPT[0] -> PD at 0x3000
     mov dword [0x2000], 0x3003
-    mov dword [0x3000], 0x4003
-    
-    mov dword [0x4000], 0x0000003f  ; 0MB-2MB
-    
-    ; Load page directory
+    mov dword [0x2004], 0x0000
+
+    ; PD[0] -> 2MB huge page at physical 0x00000000
+    ; 0x83 = present | writable | huge page
+    mov dword [0x3000], 0x0083
+    mov dword [0x3004], 0x0000
+
+    ; Load PML4 address into CR3
     mov eax, 0x1000
     mov cr3, eax
-    
-    ; Enable long mode
+
+    ; Enable long mode via EFER MSR
     mov ecx, 0xc0000080
     rdmsr
     or eax, 0x100
     wrmsr
-    
-    ; Enable paging
+
+    ; Enable paging + protected mode
     mov eax, cr0
     or eax, 0x80000001
     mov cr0, eax
-    
-    ; Jump to 64-bit code
+
+    ; Far jump into 64-bit code
     jmp 0x08:long_mode_start
 
 bits 64
